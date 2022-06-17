@@ -1,0 +1,65 @@
+version: '3.3'
+
+services:
+  nginx:
+    build: 
+      context: .
+      dockerfile: docker/nginx.dockerfile
+    volumes:
+     - C:\OpenServer\domains\bit24:/var/www/bit24
+    ports: 
+      - 80:80
+    links: 
+      - fpm
+    networks:
+      - app-network
+    
+  fpm:
+    build: 
+      context: .
+      dockerfile: docker/fpm.dockerfile
+    volumes:
+     - C:\OpenServer\domains\bit24:/var/www/bit24
+     
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql
+    cap_add:
+      - SYS_NICE
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports: 
+      - 3306:3306
+      - 33060:33060
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mydb
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+    container_name: database
+    
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    environment:
+     
+      - PMA_HOST=mysql
+      
+    ports:
+      - 81:80
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    
